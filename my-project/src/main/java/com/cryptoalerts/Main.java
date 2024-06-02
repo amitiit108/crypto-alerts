@@ -8,19 +8,24 @@ import com.cryptoalerts.repository.AlertRepository;
 import com.cryptoalerts.service.AlertService;
 import com.cryptoalerts.service.NotificationService;
 import com.cryptoalerts.service.PriceCheckerService;
-
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Timer;
 
 public class Main {
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) {
         try {
             // Load application properties
@@ -48,6 +53,9 @@ public class Main {
             config.register(new AlertController(alertService));
             config.register(new HealthCheckController());
 
+            // Enable CORS by adding CORS filter to ResourceConfig
+            config.register(new CorsFilter());
+
             // Define base URI and create server
             String portStr = properties.getProperty("server.port", "8888");
             int port = Integer.parseInt(portStr);
@@ -56,15 +64,21 @@ public class Main {
             JdkHttpServerFactory.createHttpServer(baseUri, config);
 
             // Start price checker service
+            Set<AlertWebSocketServer> webSocketServers = new HashSet<>();
+            AlertWebSocketServer socketServer = new AlertWebSocketServer(8080);
+            webSocketServers.add(socketServer);
+            socketServer.start();
+
             Timer timer = new Timer(true);
             PriceCheckerService priceCheckerService = new PriceCheckerService(alertService, binanceAPIConfig,
-                    notificationService);
+                    notificationService, webSocketServers);
             long checkInterval = Long.parseLong(properties.getProperty("price.check.interval", "60000"));
             timer.scheduleAtFixedRate(priceCheckerService, 0, checkInterval);
 
-            System.out.println("Server started at " + baseUri);
+            logger.info("Server started at {}", baseUri);
         } catch (IOException | SQLException e) {
             e.printStackTrace();
+            logger.error("An error occurred during startup", e);
         }
     }
 
@@ -73,7 +87,7 @@ public class Main {
         try {
             properties.load(Main.class.getResourceAsStream("/application.properties"));
         } catch (IOException e) {
-            System.err.println("Failed to load application.properties file");
+            logger.error("Failed to load application.properties file", e);
             throw e;
         }
         return properties;

@@ -5,8 +5,6 @@ import com.cryptoalerts.model.AlertStatus;
 import com.cryptoalerts.repository.AlertRepository;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
-
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;

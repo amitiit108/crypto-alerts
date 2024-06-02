@@ -1,11 +1,16 @@
 package com.cryptoalerts.repository;
 
 import com.cryptoalerts.model.Alert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AlertRepository {
+    private static final Logger logger = LoggerFactory.getLogger(AlertRepository.class);
+
     private final Connection connection;
 
     public AlertRepository(Connection connection) {
@@ -27,6 +32,10 @@ public class AlertRepository {
                     alert.setId(generatedKeys.getInt(1));
                 }
             }
+            logger.info("Alert saved successfully with ID: {}", alert.getId());
+        } catch (SQLException e) {
+            logger.error("Error saving alert to the database: {}", e.getMessage());
+            throw e; // Rethrow the exception to propagate it to the caller
         }
     }
 
@@ -37,30 +46,33 @@ public class AlertRepository {
              ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
                 Alert alert = new Alert(
-                    resultSet.getInt("id"),
-                    resultSet.getString("symbol"),
-                    resultSet.getString("basis"),
-                    resultSet.getInt("ma_length"), // Assuming ma_length is an integer
-                    resultSet.getDouble("value"),
-                    resultSet.getString("direction"),
-                    resultSet.getString("status")
+                        resultSet.getInt("id"),
+                        resultSet.getString("symbol"),
+                        resultSet.getString("basis"),
+                        resultSet.getInt("ma_length"),
+                        resultSet.getDouble("value"),
+                        resultSet.getString("direction"),
+                        resultSet.getString("status")
                 );
                 alerts.add(alert);
             }
-            System.out.println("Retrieved " + alerts.size() + " alerts from the database.");
+            logger.info("Retrieved {} alerts from the database.", alerts.size());
         } catch (SQLException e) {
-            System.err.println("Error fetching alerts from the database: " + e.getMessage());
-            e.printStackTrace(); // Print the stack trace for detailed error information
+            logger.error("Error fetching alerts from the database: {}", e.getMessage());
+            e.printStackTrace();
         }
         return alerts;
     }
-    
 
     public void delete(int id) throws SQLException {
         String sql = "DELETE FROM alerts WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             statement.executeUpdate();
+            logger.info("Alert with ID {} deleted successfully.", id);
+        } catch (SQLException e) {
+            logger.error("Error deleting alert from the database: {}", e.getMessage());
+            throw e;
         }
     }
 
@@ -70,6 +82,10 @@ public class AlertRepository {
             statement.setString(1, status);
             statement.setInt(2, id);
             statement.executeUpdate();
+            logger.info("Alert status updated successfully for ID {}: {}", id, status);
+        } catch (SQLException e) {
+            logger.error("Error updating alert status in the database: {}", e.getMessage());
+            throw e;
         }
     }
 }

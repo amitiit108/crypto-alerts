@@ -9,12 +9,12 @@ import com.google.gson.JsonSyntaxException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.sql.SQLException;
 import java.util.List;
 
 @Path("/alerts")
 public class AlertController {
     private final AlertService alertService;
+    private final Gson gson = new Gson();
 
     public AlertController(AlertService alertService) {
         this.alertService = alertService;
@@ -25,25 +25,32 @@ public class AlertController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createAlert(String json) {
         try {
-            Gson gson = new Gson();
-            Alert alert = gson.fromJson(json, Alert.class);
-            if (alert != null) {
-                System.out.println("Alert details from request payload:");
-                System.out.println(json); // Assuming message is a property
-            } else {
-                // Handle the case where the alert object is null (e.g., log an error)
-                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid request payload").build();
+            // Input validation
+            if (json == null || json.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Request body is empty").build();
             }
+
+            // Parse JSON payload
+            Alert alert = gson.fromJson(json, Alert.class);
+            if (alert == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid JSON payload").build();
+            }
+
+            // Validate alert properties
+            if (!isValidAlert(alert)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid alert properties").build();
+            }
+
+            // Create the alert
             alertService.createAlert(alert);
             AlertResponse response = new AlertResponse("Alert created successfully");
-            // Convert the response object to JSON
+
+            // Convert response object to JSON
             String jsonResponse = gson.toJson(response);
             return Response.status(Response.Status.CREATED).entity(jsonResponse).build();
         } catch (JsonSyntaxException e) {
-            // Handle JSON parsing error
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid JSON payload").build();
         } catch (Exception e) {
-            // Handle other exceptions
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error occurred while processing the request").build();
@@ -53,19 +60,27 @@ public class AlertController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllAlerts() {
-        List<Alert> alerts = alertService.getAllAlerts();
-        String json = new Gson().toJson(alerts);
-        return Response.ok(json).build();
+        try {
+            List<Alert> alerts = alertService.getAllAlerts();
+            String json = gson.toJson(alerts);
+            return Response.ok(json).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error occurred while processing the request").build();
+        }
     }
 
     @DELETE
     @Path("/{id}")
     public Response removeAlert(@PathParam("id") int id) {
-        try {
-            alertService.removeAlert(id);
-            return Response.status(Response.Status.NO_CONTENT).build();
-        } catch (SQLException e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-        }
+        alertService.removeAlert(id);
+        return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    private boolean isValidAlert(Alert alert) {
+        // Implement validation logic for alert properties
+        // Return true if the alert is valid, false otherwise
+        return true;
     }
 }

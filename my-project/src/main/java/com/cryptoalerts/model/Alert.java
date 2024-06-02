@@ -1,6 +1,11 @@
 package com.cryptoalerts.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Alert {
+    private static final Logger logger = LoggerFactory.getLogger(Alert.class);
+
     private int id;
     private String symbol;
     private String basis;
@@ -9,7 +14,6 @@ public class Alert {
     private String direction;
     private String status;
 
-    // Constructor
     public Alert(int id, String symbol, String basis, Integer maLength, double value, String direction, String status) {
         this.id = id;
         this.symbol = symbol;
@@ -20,7 +24,6 @@ public class Alert {
         this.status = status;
     }
 
-    // Getters and Setters
     public int getId() {
         return id;
     }
@@ -77,16 +80,13 @@ public class Alert {
         this.status = status;
     }
 
-    // Method to implement pending operation
     public void implementPending() {
-        if (status.equals("pending")) {
+        if ("pending".equals(status)) {
+            logger.info("Implementing pending operation for alert with ID: {}", id);
             // Perform the pending operation here
-            System.out.println("Implementing pending operation for alert with ID: " + id);
-            // Update status after implementation
             status = "implemented";
         } else {
-            // Do nothing if status is not pending
-            System.out.println("Alert is not pending. Status: " + status);
+            logger.info("Alert is not pending. Status: {}", status);
         }
     }
 }
