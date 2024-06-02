@@ -1,0 +1,38 @@
+.alert-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .alert-list li {
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .alert-list li span {
+    flex-grow: 1;
+  }
+  
+  .alert-list button {
+    padding: 5px 10px;
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .alert-list button:hover {
+    background-color: #c82333;
+  }
+  
+  .error {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  

@@ -1,0 +1,12 @@
+/* src/index.css */
+
+.error {
+  color: red;
+  margin: 10px 0;
+}
+
+.notification {
+  background-color: lightgreen;
+  padding: 10px;
+  margin: 10px 0;
+}
